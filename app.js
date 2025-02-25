@@ -7,6 +7,7 @@ import { Server } from "socket.io";
 import { createServer } from "node:http";
 import { ClipboardDB } from "./db.js";
 import { config } from "dotenv";
+import { rmSync } from "fs";
 
 const app = express();
 app.use(express.json());
@@ -42,11 +43,7 @@ io.on("connection", (socket) => {
         [payload.title, payload.content, payload.id]
       );
 
-      // for (let id of io.sockets.sockets.keys()) {
-      // if (id != payload.client_id) {
       io.emit("update_paste", updatedRecord);
-      // }
-      // }
     } catch (error) {
       console.error(error);
     }
@@ -160,6 +157,12 @@ app.delete("/archive/:id/delete", async (req, res) => {
     );
 
     if (!updatedRecord) return res.status(404).json("Archive ID not found");
+
+    try {
+      rmSync(updatedRecord.path);
+    } catch (error) {
+      console.error(error);
+    }
 
     io.emit("delete_archive", updatedRecord.id);
 
