@@ -13,6 +13,9 @@ RUN npm install
 # Copia il resto del codice
 COPY . .
 
+ENV PORT=5000
+ENV DB=pastebin.db
+
 # Esponi la porta usata dall'app
 EXPOSE 5000
 
