@@ -7,7 +7,7 @@ import { Server } from "socket.io";
 import { createServer } from "node:http";
 import { ClipboardDB } from "./db.js";
 import { config } from "dotenv";
-import { rmSync } from "fs";
+import { fstat, rmSync } from "fs";
 
 const app = express();
 app.use(express.json());
@@ -118,6 +118,7 @@ app.post("/archive/publish", upload.single("file"), async (req, res) => {
     io.emit("new_archive", payload);
     return res.status(200).json(payload);
   } catch (error) {
+    unlinkSync(file.path);
     console.error(error);
   }
 });
@@ -159,7 +160,6 @@ app.delete("/archive/:id/delete", async (req, res) => {
       "DELETE FROM archive WHERE id = ? RETURNING *",
       [id]
     );
-    console.log(updatedRecord);
 
     if (!updatedRecord) return res.status(404).json("Archive ID not found");
 
