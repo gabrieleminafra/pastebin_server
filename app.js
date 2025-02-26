@@ -133,10 +133,14 @@ app.get("/archive/all", async (req, res) => {
 });
 
 app.get("/archive/get", async (req, res) => {
-  const filePath = decodeURIComponent(req.query.path);
+  const id = req.query.id;
+
+  const payload = await db.getOne("SELECT * FROM archive WHERE id = ?", [id]);
+
+  if (!payload) return res.status(404).json("Record not found");
 
   try {
-    const absolutePath = path.resolve(filePath);
+    const absolutePath = path.resolve(payload.path);
     res.download(absolutePath, (err) => {
       if (err) {
         return res.status(500).json(err);
