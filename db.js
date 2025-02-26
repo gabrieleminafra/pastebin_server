@@ -25,7 +25,7 @@ export class ClipboardDB {
 
     try {
       this.db.run(
-        "CREATE TABLE IF NOT EXISTS archive (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, path TEXT, created_at TEXT, archived BOOLEAN NOT NULL DEFAULT 0);"
+        "CREATE TABLE IF NOT EXISTS archive (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, path TEXT, created_at TEXT);"
       );
     } catch (error) {
       console.log(error);

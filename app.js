@@ -124,7 +124,7 @@ app.post("/archive/publish", upload.single("file"), async (req, res) => {
 
 app.get("/archive/all", async (req, res) => {
   try {
-    const payload = await db.getAll("SELECT * FROM archive WHERE archived = 0");
+    const payload = await db.getAll("SELECT * FROM archive");
 
     return res.status(200).json(payload);
   } catch (error) {
@@ -156,9 +156,10 @@ app.delete("/archive/:id/delete", async (req, res) => {
 
   try {
     const updatedRecord = await db.getOne(
-      "UPDATE archive SET archived = 1 WHERE id = ? RETURNING *",
+      "DELETE FROM archive WHERE id = ? RETURNING *",
       [id]
     );
+    console.log(updatedRecord);
 
     if (!updatedRecord) return res.status(404).json("Archive ID not found");
 
