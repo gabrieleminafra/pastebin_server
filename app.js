@@ -43,15 +43,19 @@ io.on("connection", (socket) => {
         [payload.title, payload.content, payload.id]
       );
 
-      io.emit("update_paste", updatedRecord);
+      for (let id of io.sockets.sockets.keys()) {
+        if (payload.client_id != id) {
+          io.to(id).emit("update_paste", updatedRecord);
+        }
+      }
     } catch (error) {
       console.error(error);
     }
   });
 });
 
-app.post("/clipboard/publish", async (req, res) => {
-  const { title, content } = req.body;
+app.post("/clipboard", async (req, res) => {
+  const { title, content, client_id } = req.body;
 
   try {
     const payload = await db.getOne(
@@ -63,15 +67,20 @@ app.post("/clipboard/publish", async (req, res) => {
       ]
     );
 
-    io.emit("new_paste", payload);
+    for (let id of io.sockets.sockets.keys()) {
+      if (client_id != id) {
+        io.to(id).emit("new_paste", payload);
+      }
+    }
+
     return res.status(200).json(payload);
   } catch (error) {
     console.error(error);
   }
 });
 
-app.delete("/clipboard/:id/delete", async (req, res) => {
-  const { id } = req.params;
+app.delete("/clipboard", async (req, res) => {
+  const { id, client_id } = req.query;
 
   try {
     const updatedRecord = await db.getOne(
@@ -81,7 +90,11 @@ app.delete("/clipboard/:id/delete", async (req, res) => {
 
     if (!updatedRecord) return res.status(404).json("Paste ID not found");
 
-    io.emit("delete_paste", updatedRecord.id);
+    for (let id of io.sockets.sockets.keys()) {
+      if (client_id != id) {
+        io.to(id).emit("delete_paste", updatedRecord.id);
+      }
+    }
 
     return res.status(200).json(updatedRecord.id);
   } catch (error) {
