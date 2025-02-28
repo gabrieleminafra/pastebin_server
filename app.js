@@ -43,7 +43,7 @@ io.on("connection", (socket) => {
         [payload.title, payload.content, payload.id]
       );
 
-      io.except(client_id).emit("update_paste", updatedRecord);
+      io.except(payload.client_id).emit("update_paste", updatedRecord);
     } catch (error) {
       console.error(error);
     }
