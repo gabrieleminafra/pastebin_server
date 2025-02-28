@@ -43,11 +43,7 @@ io.on("connection", (socket) => {
         [payload.title, payload.content, payload.id]
       );
 
-      for (let id of io.sockets.sockets.keys()) {
-        if (payload.client_id != id) {
-          io.to(id).emit("update_paste", updatedRecord);
-        }
-      }
+      io.except(client_id).emit("update_paste", updatedRecord);
     } catch (error) {
       console.error(error);
     }
@@ -67,11 +63,7 @@ app.post("/clipboard", async (req, res) => {
       ]
     );
 
-    for (let id of io.sockets.sockets.keys()) {
-      if (client_id != id) {
-        io.to(id).emit("new_paste", payload);
-      }
-    }
+    io.except(client_id).emit("new_paste", payload);
 
     return res.status(200).json(payload);
   } catch (error) {
@@ -90,11 +82,7 @@ app.delete("/clipboard", async (req, res) => {
 
     if (!updatedRecord) return res.status(404).json("Paste ID not found");
 
-    for (let id of io.sockets.sockets.keys()) {
-      if (client_id != id) {
-        io.to(id).emit("delete_paste", updatedRecord.id);
-      }
-    }
+    io.except(client_id).emit("delete_paste", updatedRecord.id);
 
     return res.status(200).json(updatedRecord.id);
   } catch (error) {
@@ -129,11 +117,7 @@ app.post("/archive", upload.single("file"), async (req, res) => {
       ]
     );
 
-    for (let id of io.sockets.sockets.keys()) {
-      if (client_id != id) {
-        io.to(id).emit("new_archive", payload);
-      }
-    }
+    io.except(client_id).emit("new_archive", payload);
 
     return res.status(200).json(payload);
   } catch (error) {
@@ -188,11 +172,7 @@ app.delete("/archive", async (req, res) => {
       console.error(error);
     }
 
-    for (let id of io.sockets.sockets.keys()) {
-      if (client_id != id) {
-        io.to(id).emit("delete_archive", updatedRecord.id);
-      }
-    }
+    io.except(client_id).emit("delete_archive", updatedRecord.id);
 
     return res.status(200).json(updatedRecord.id);
   } catch (error) {
