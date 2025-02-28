@@ -114,8 +114,9 @@ app.get("/clipboard/all", async (req, res) => {
   }
 });
 
-app.post("/archive/publish", upload.single("file"), async (req, res) => {
+app.post("/archive", upload.single("file"), async (req, res) => {
   const file = req.file;
+  const { client_id } = req.query;
 
   try {
     const payload = await db.getOne(
@@ -128,7 +129,12 @@ app.post("/archive/publish", upload.single("file"), async (req, res) => {
       ]
     );
 
-    io.emit("new_archive", payload);
+    for (let id of io.sockets.sockets.keys()) {
+      if (client_id != id) {
+        io.to(id).emit("new_archive", payload);
+      }
+    }
+
     return res.status(200).json(payload);
   } catch (error) {
     unlinkSync(file.path);
@@ -146,7 +152,7 @@ app.get("/archive/all", async (req, res) => {
   }
 });
 
-app.get("/archive/get", async (req, res) => {
+app.get("/archive/download", async (req, res) => {
   const id = req.query.id;
 
   const payload = await db.getOne("SELECT * FROM archive WHERE id = ?", [id]);
@@ -165,8 +171,8 @@ app.get("/archive/get", async (req, res) => {
   }
 });
 
-app.delete("/archive/:id/delete", async (req, res) => {
-  const { id } = req.params;
+app.delete("/archive", async (req, res) => {
+  const { id, client_id } = req.query;
 
   try {
     const updatedRecord = await db.getOne(
@@ -182,15 +188,14 @@ app.delete("/archive/:id/delete", async (req, res) => {
       console.error(error);
     }
 
-    io.emit("delete_archive", updatedRecord.id);
+    for (let id of io.sockets.sockets.keys()) {
+      if (client_id != id) {
+        io.to(id).emit("delete_archive", updatedRecord.id);
+      }
+    }
 
     return res.status(200).json(updatedRecord.id);
   } catch (error) {
     console.error(error);
   }
 });
-
-// const logger = (log) => {
-//   io.emit("consoleEvent", { payload: log });
-//   console.log(log);
-// };
