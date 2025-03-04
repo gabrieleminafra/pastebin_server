@@ -27,6 +27,9 @@ const io = new Server(server, {
 
 const db = new ClipboardDB(process.env.DB);
 
+let isSavingToDB = false;
+let packetsQueue = [];
+
 db.init();
 
 io.on("connection", (socket) => {
@@ -37,13 +40,54 @@ io.on("connection", (socket) => {
   });
 
   socket.on("edit_paste", async (payload) => {
-    try {
-      const updatedRecord = await db.getOne(
-        "UPDATE clipboard SET title = ?, content = ? WHERE id = ? RETURNING *",
-        [payload.title, payload.content, payload.id]
-      );
+    isSavingToDB = true;
 
-      io.except(payload.client_id).emit("update_paste", updatedRecord);
+    console.log("SAVING");
+
+    try {
+      const query = `UPDATE clipboard SET ${payload.target} = ? WHERE id = ? RETURNING *`;
+
+      const updatedData = await db.getOne(query, [payload.value, payload.id]);
+
+      io.except(payload.client_id).emit("update_paste", {
+        ...payload,
+        value: updatedData[payload.target],
+      });
+
+      if (packetsQueue.length > 0) {
+        for (const packet of packetsQueue) {
+          try {
+            io.except(packet.c).emit("incremental_update_paste", {
+              ...packet,
+              c: undefined,
+            });
+          } catch (error) {
+            console.error(error);
+          }
+        }
+
+        packetsQueue = [];
+      }
+    } catch (error) {
+      console.error(error);
+    }
+
+    isSavingToDB = false;
+  });
+
+  socket.on("write_paste", async (payload) => {
+    console.log(payload.s, payload.e, payload.v);
+
+    if (isSavingToDB) {
+      packetsQueue.push(payload);
+      return;
+    }
+
+    try {
+      io.except(payload.c).emit("incremental_update_paste", {
+        ...payload,
+        c: undefined,
+      });
     } catch (error) {
       console.error(error);
     }
