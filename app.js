@@ -42,8 +42,6 @@ io.on("connection", (socket) => {
   socket.on("edit_paste", async (payload) => {
     isSavingToDB = true;
 
-    console.log("SAVING");
-
     try {
       const query = `UPDATE clipboard SET ${payload.target} = ? WHERE id = ? RETURNING *`;
 
@@ -57,6 +55,8 @@ io.on("connection", (socket) => {
       if (packetsQueue.length > 0) {
         for (const packet of packetsQueue) {
           try {
+            console.log("Emitting queued packet...");
+
             io.except(packet.c).emit("incremental_update_paste", {
               ...packet,
               c: undefined,
@@ -76,15 +76,13 @@ io.on("connection", (socket) => {
   });
 
   socket.on("write_paste", async (payload) => {
-    console.log(payload.s, payload.e, payload.v);
-
     if (isSavingToDB) {
       packetsQueue.push(payload);
       return;
     }
 
     try {
-      io.except(payload.c).emit("incremental_update_paste", {
+      io.except(payload.c).emit("incremental_write_paste", {
         ...payload,
         c: undefined,
       });
