@@ -1,4 +1,5 @@
 import sqlite3 from "sqlite3";
+import fs from "fs";
 
 export class Database {
   constructor(target) {
@@ -7,11 +8,21 @@ export class Database {
   }
 
   init() {
-    this.db = new sqlite3.Database("./" + this.target, (err) => {
+    const dbFolder = "./mount/db/";
+    const dbTarget = dbFolder + this.target;
+    if (!fs.existsSync(dbFolder)) {
+      fs.mkdirSync(dbFolder, { recursive: true });
+    }
+    this.db = new sqlite3.Database(dbTarget, (err) => {
       if (err) {
-        console.error("Errore nell'apertura del database:" + err.message);
+        console.error(
+          "Errore nell'apertura del database in: " +
+            dbTarget +
+            " " +
+            err.message
+        );
       } else {
-        console.log("Database connected successfully. File is " + this.target);
+        console.log("Database connected successfully. File is " + dbTarget);
       }
     });
 

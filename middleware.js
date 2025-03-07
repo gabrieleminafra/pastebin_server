@@ -1,7 +1,7 @@
 import multer from "multer";
 import fs from "fs";
 
-const uploadsFolder = process.env.UPLOADS_FOLDER || "uploads";
+const uploadsFolder = "mount/uploads";
 
 if (!fs.existsSync(uploadsFolder)) {
   fs.mkdirSync(uploadsFolder, { recursive: true });
@@ -12,21 +12,13 @@ const storage = multer.diskStorage({
     cb(null, uploadsFolder);
   },
   filename: function (req, file, cb) {
-    // Genera un nome file unico
     const uniqueSuffix = Date.now();
     cb(null, `(${uniqueSuffix})-${file.originalname}`);
   },
 });
 
-// Aggiunge filtro per i file
-const fileFilter = (req, file, cb) => {
-  cb(null, true);
-  return;
-};
-
 const upload = multer({
   storage: storage,
-  fileFilter: fileFilter,
   limits: {
     fileSize: 1024 * 1024 * 1024, // limita a 1GB
   },
