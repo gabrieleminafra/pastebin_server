@@ -1,6 +1,6 @@
 import sqlite3 from "sqlite3";
 
-export class ClipboardDB {
+export class Database {
   constructor(target) {
     this.db = null;
     this.target = target;

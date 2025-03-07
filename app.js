@@ -5,9 +5,9 @@ import path from "path";
 
 import { Server } from "socket.io";
 import { createServer } from "node:http";
-import { ClipboardDB } from "./db.js";
+import { Database } from "./db.js";
 import { config } from "dotenv";
-import { fstat, rmSync } from "fs";
+import { rmSync } from "fs";
 
 const app = express();
 app.use(express.json());
@@ -25,7 +25,7 @@ const io = new Server(server, {
   transports: ["websocket"],
 });
 
-const db = new ClipboardDB(process.env.DB);
+const db = new Database(process.env.DB);
 
 let isSavingToDB = false;
 let packetsQueue = [];
