@@ -1,3 +1,6 @@
 node_modules
 npm-debug.log
-clipboard-test.db
+database_test.db
+database.db
+mount/
+

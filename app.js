@@ -5,9 +5,9 @@ import path from "path";
 
 import { Server } from "socket.io";
 import { createServer } from "node:http";
-import { ClipboardDB } from "./db.js";
+import { Database } from "./db.js";
 import { config } from "dotenv";
-import { fstat, rmSync } from "fs";
+import { rmSync } from "fs";
 
 const app = express();
 app.use(express.json());
@@ -25,7 +25,10 @@ const io = new Server(server, {
   transports: ["websocket"],
 });
 
-const db = new ClipboardDB(process.env.DB);
+const db = new Database(process.env.DB);
+
+let isSavingToDB = false;
+let packetsQueue = [];
 
 db.init();
 
@@ -37,13 +40,52 @@ io.on("connection", (socket) => {
   });
 
   socket.on("edit_paste", async (payload) => {
-    try {
-      const updatedRecord = await db.getOne(
-        "UPDATE clipboard SET title = ?, content = ? WHERE id = ? RETURNING *",
-        [payload.title, payload.content, payload.id]
-      );
+    isSavingToDB = true;
 
-      io.except(payload.client_id).emit("update_paste", updatedRecord);
+    try {
+      const query = `UPDATE clipboard SET ${payload.target} = ? WHERE id = ? RETURNING *`;
+
+      const updatedData = await db.getOne(query, [payload.value, payload.id]);
+
+      io.except(payload.client_id).emit("update_paste", {
+        ...payload,
+        value: updatedData[payload.target],
+      });
+
+      if (packetsQueue.length > 0) {
+        for (const packet of packetsQueue) {
+          try {
+            console.log("Emitting queued packet...");
+
+            io.except(packet.c).emit("incremental_update_paste", {
+              ...packet,
+              c: undefined,
+            });
+          } catch (error) {
+            console.error(error);
+          }
+        }
+
+        packetsQueue = [];
+      }
+    } catch (error) {
+      console.error(error);
+    }
+
+    isSavingToDB = false;
+  });
+
+  socket.on("write_paste", async (payload) => {
+    if (isSavingToDB) {
+      packetsQueue.push(payload);
+      return;
+    }
+
+    try {
+      io.except(payload.c).emit("incremental_write_paste", {
+        ...payload,
+        c: undefined,
+      });
     } catch (error) {
       console.error(error);
     }
