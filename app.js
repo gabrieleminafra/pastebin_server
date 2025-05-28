@@ -22,6 +22,7 @@ server.listen(process.env.PORT ?? 5000, () => {
 });
 
 const io = new Server(server, {
+  path: "/ws",
   transports: ["websocket"],
 });
 
@@ -92,7 +93,7 @@ io.on("connection", (socket) => {
   });
 });
 
-app.post("/clipboard", async (req, res) => {
+app.post("/api/clipboard", async (req, res) => {
   const { title, content, client_id } = req.body;
 
   try {
@@ -113,7 +114,7 @@ app.post("/clipboard", async (req, res) => {
   }
 });
 
-app.delete("/clipboard", async (req, res) => {
+app.delete("/api/clipboard", async (req, res) => {
   const { id, client_id } = req.query;
 
   try {
@@ -132,7 +133,7 @@ app.delete("/clipboard", async (req, res) => {
   }
 });
 
-app.get("/clipboard/all", async (req, res) => {
+app.get("/api/clipboard/all", async (req, res) => {
   try {
     const payload = await db.getAll(
       "SELECT * FROM clipboard WHERE archived = 0"
@@ -144,7 +145,7 @@ app.get("/clipboard/all", async (req, res) => {
   }
 });
 
-app.post("/archive", upload.single("file"), async (req, res) => {
+app.post("/api/archive", upload.single("file"), async (req, res) => {
   const file = req.file;
   const { client_id } = req.query;
 
@@ -168,7 +169,7 @@ app.post("/archive", upload.single("file"), async (req, res) => {
   }
 });
 
-app.get("/archive/all", async (req, res) => {
+app.get("/api/archive/all", async (req, res) => {
   try {
     const payload = await db.getAll("SELECT * FROM archive");
 
@@ -178,7 +179,7 @@ app.get("/archive/all", async (req, res) => {
   }
 });
 
-app.get("/archive/download", async (req, res) => {
+app.get("/api/archive/download", async (req, res) => {
   const id = req.query.id;
 
   const payload = await db.getOne("SELECT * FROM archive WHERE id = ?", [id]);
@@ -197,7 +198,7 @@ app.get("/archive/download", async (req, res) => {
   }
 });
 
-app.delete("/archive", async (req, res) => {
+app.delete("/api/archive", async (req, res) => {
   const { id, client_id } = req.query;
 
   try {
