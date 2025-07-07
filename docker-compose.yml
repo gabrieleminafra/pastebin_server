@@ -1,0 +1,12 @@
+services:
+  pastebin_server:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pastebin_server
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mount:/app/mount
+
